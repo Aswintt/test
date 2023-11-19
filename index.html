@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Capture</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="capture">Capture</button>
+    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+    <img id="photo" src="#" alt="Captured Photo">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const photo = document.getElementById('photo');
+            const captureButton = document.getElementById('capture');
+
+            // Access the camera
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then((stream) => {
+                    video.srcObject = stream;
+                })
+                .catch((error) => {
+                    console.error('Error accessing the camera:', error);
+                });
+
+            // Capture and save the image
+            captureButton.addEventListener('click', () => {
+                const context = canvas.getContext('2d');
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Save the image data to the photo element
+                photo.src = canvas.toDataURL('image/png');
+
+                // You can also save the image data to a server using AJAX or fetch
+                // For example:
+                // fetch('save-image.php', {
+                //     method: 'POST',
+                //     body: JSON.stringify({ imageData: canvas.toDataURL('image/png') }),
+                //     headers: {
+                //         'Content-Type': 'application/json'
+                //     }
+                // })
+                // .then(response => response.json())
+                // .then(data => console.log(data))
+                // .catch(error => console.error('Error saving image:', error));
+            });
+        });
+    </script>
+</body>
+</html>
