@@ -3,52 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Camera Capture</title>
+    <title>Camera Capture and OCR</title>
 </head>
 <body>
+    <h1>Camera Capture and OCR</h1>
+
     <video id="video" width="640" height="480" autoplay></video>
-    <button id="capture">Capture</button>
-    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
-    <img id="photo" src="#" alt="Captured Photo">
+    <button id="capture">Capture Image</button>
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <div id="result"></div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-            const video = document.getElementById('video');
-            const canvas = document.getElementById('canvas');
-            const photo = document.getElementById('photo');
-            const captureButton = document.getElementById('capture');
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function (stream) {
+                var video = document.getElementById('video');
+                video.srcObject = stream;
+            })
+            .catch(function (err) {
+                console.log("An error occurred: " + err);
+            });
 
-            // Access the camera
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then((stream) => {
-                    video.srcObject = stream;
-                })
-                .catch((error) => {
-                    console.error('Error accessing the camera:', error);
-                });
+        document.getElementById('capture').addEventListener('click', function () {
+            var video = document.getElementById('video');
+            var canvas = document.getElementById('canvas');
+            var context = canvas.getContext('2d');
 
-            // Capture and save the image
-            captureButton.addEventListener('click', () => {
-                const context = canvas.getContext('2d');
-                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // Draw the current frame from the video onto the canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                // Save the image data to the photo element
-                photo.src = canvas.toDataURL('image/png');
+            // Stop the video stream
+            video.srcObject.getVideoTracks().forEach(track => track.stop());
 
-                // You can also save the image data to a server using AJAX or fetch
-                // For example:
-                // fetch('save-image.php', {
-                //     method: 'POST',
-                //     body: JSON.stringify({ imageData: canvas.toDataURL('image/png') }),
-                //     headers: {
-                //         'Content-Type': 'application/json'
-                //     }
-                // })
-                // .then(response => response.json())
-                // .then(data => console.log(data))
-                // .catch(error => console.error('Error saving image:', error));
+            // Get the image data from the canvas
+            var imageData = canvas.toDataURL('image/png');
+
+            // Send the image data to Tesseract.js for OCR
+            Tesseract.recognize(
+                imageData,
+                'eng', // Specify the language (you may need to include the language file)
+                { logger: info => console.log(info) } // Optional logger callback
+            ).then(({ data: { text } }) => {
+                // Display the extracted text on the page
+                document.getElementById('result').innerText = text;
             });
         });
     </script>
+
+    <!-- Include Tesseract.js -->
+    <script src="https://cdn.rawgit.com/naptha/tesseract.js/1.0.10/dist/tesseract.js"></script>
 </body>
 </html>
